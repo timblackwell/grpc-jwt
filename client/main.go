@@ -6,6 +6,7 @@ import (
 	"golang.org/x/net/context"
 	"flag"
 	"os"
+	"google.golang.org/grpc/metadata"
 )
 
 
@@ -23,13 +24,17 @@ func main() {
 		fmt.Printf("Error: %v", err)
 	}
 
-	// create context with JWT
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, "authorization", accessToken)
-
 	// create client and call
 	client := protobuf.NewAddClient(conn)
-	result, err := client.Add(ctx, &protobuf.AddRequest{A: 1, B: 2})
+
+	// create context with JWT
+	md := metadata.Pairs("token", *accessToken)
+	ctx := context.Background()
+	ctx = metadata.NewContext(ctx, md)
+
+	var header, trailer metadata.MD
+	result, err := client.Add(ctx, &protobuf.AddRequest{A: 1, B: 2}, grpc.Header(&header), grpc.Trailer(&trailer))
+
 	if err != nil {
 		fmt.Printf("Error: %v", err)
 	}
