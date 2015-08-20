@@ -3,8 +3,6 @@ import (
 	"net"
 	"google.golang.org/grpc"
 	"fmt"
-	"google.golang.org/grpc/credentials/oauth"
-	"golang.org/x/net/context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -28,24 +26,14 @@ func main() {
 
 
 	go func() {
-
 		ln, err := net.Listen("tcp", *grpcAddr)
 		if err != nil {
 			errc <- err
 			return
 		}
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		// I was hoping this would set the scope needed to make
-		// gRPC calls to this server
-		cred, err := oauth.NewApplicationDefault(ctx, "scope1")
-		opt := grpc.Creds(cred)
-		s := grpc.NewServer(opt)
-
+		s := grpc.NewServer()
 		protobuf.RegisterAddServer(s, AddServer{})
-
 		errc <- s.Serve(ln)
 	}()
 
